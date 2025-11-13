@@ -244,4 +244,465 @@
       <div id="medication-content" class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4 ml-8 space-y-4">
         <!-- (medication questions unchanged from your version) -->
         <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-          <input
+          <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                 data-category="Medication Information"
+                 data-question="Do I need to take this medicine with food, an empty stomach, or does it not matter? (For oral medications)">
+          <span class="text-gray-700">Do I need to take this medicine with food, an empty stomach, or does it not matter? (For oral medications)</span>
+        </label>
+
+        <!-- ... keep the rest of this section exactly as you had it ... -->
+      </div>
+     </div>
+
+     <!-- Side Effects, Injection Based Questions, Concerns sections -->
+     <!-- (keep exactly as in your current file – truncated here for brevity) -->
+
+    </div>
+
+    <div class="mt-8 text-center">
+     <button id="generate-list" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+       <span id="button-text">Generate My Question List</span>
+       <span id="loading-spinner" class="hidden ml-2">
+         <svg class="animate-spin h-4 w-4 inline" viewBox="0 0 24 24">
+           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+           <path class="opacity-75" fill="CurrentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2
+             5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3
+             7.938l3-2.647z"></path>
+         </svg>
+       </span>
+     </button>
+    </div>
+   </div>
+
+   <!-- Generated Questions List -->
+   <div id="questions-list" class="hidden bg-white rounded-lg shadow-lg p-6">
+    <div class="print-only mb-6">
+     <h1 class="text-2xl font-bold text-center mb-4">Medical Questions for Pharmacist Consultation</h1>
+     <p class="text-center text-sm text-gray-600 mb-6">Generated on: <span id="print-date"></span></p>
+    </div>
+
+    <h2 class="text-2xl font-bold text-blue-900 mb-4 no-print">📋 My Questions for the Doctor</h2>
+    <div id="selected-questions" class="space-y-3"></div>
+
+    <div class="mt-6 text-center space-x-4 no-print">
+      <button id="download-pdf" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">📄 Download PDF</button>
+      <button id="print-list" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">🖨️ Print List</button>
+      <button id="clear-list" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">Clear List</button>
+    </div>
+   </div>
+
+   <!-- Status Messages -->
+   <div id="status-message" class="hidden mt-4 p-4 rounded-lg"></div>
+  </main>
+
+  <!-- Standalone JS (no Canva SDK) -->
+  <script>
+    // --- Simple standalone state ---
+
+    const patientInfoFields = {
+      name: 'patient-name',
+      age: 'patient-age',
+      condition: 'rheumatic-condition',
+      currentMeds: 'current-medications',
+      newMeds: 'new-changed-medications'
+    };
+
+    let patientInfo = {
+      name: '',
+      age: '',
+      condition: '',
+      currentMeds: '',
+      newMeds: ''
+    };
+
+    function getQuestionKey(cb) {
+      return \`\${cb.dataset.category}||\${cb.dataset.question}\`;
+    }
+
+    function loadPatientInfo() {
+      try {
+        const stored = JSON.parse(localStorage.getItem('patientInfo') || '{}');
+        patientInfo = { ...patientInfo, ...stored };
+      } catch (e) {}
+
+      document.getElementById(patientInfoFields.name).value = patientInfo.name || '';
+      document.getElementById(patientInfoFields.age).value = patientInfo.age || '';
+      document.getElementById(patientInfoFields.condition).value = patientInfo.condition || '';
+      document.getElementById(patientInfoFields.currentMeds).value = patientInfo.currentMeds || '';
+      document.getElementById(patientInfoFields.newMeds).value = patientInfo.newMeds || '';
+    }
+
+    function savePatientInfo() {
+      localStorage.setItem('patientInfo', JSON.stringify(patientInfo));
+    }
+
+    function readPatientInfoFromInputs() {
+      patientInfo.name = document.getElementById(patientInfoFields.name).value.trim();
+      patientInfo.age = document.getElementById(patientInfoFields.age).value.trim();
+      patientInfo.condition = document.getElementById(patientInfoFields.condition).value.trim();
+      patientInfo.currentMeds = document.getElementById(patientInfoFields.currentMeds).value.trim();
+      patientInfo.newMeds = document.getElementById(patientInfoFields.newMeds).value.trim();
+      savePatientInfo();
+    }
+
+    function loadSelectedQuestions() {
+      let keys = [];
+      try {
+        keys = JSON.parse(localStorage.getItem('selectedQuestions') || '[]');
+      } catch (e) {}
+
+      const keySet = new Set(keys);
+      document.querySelectorAll('.question-checkbox').forEach(cb => {
+        const key = getQuestionKey(cb);
+        cb.checked = keySet.has(key);
+      });
+    }
+
+    function saveSelectedQuestions() {
+      const keys = [];
+      document.querySelectorAll('.question-checkbox:checked').forEach(cb => {
+        keys.push(getQuestionKey(cb));
+      });
+      localStorage.setItem('selectedQuestions', JSON.stringify(keys));
+    }
+
+    function getSelectedQuestions() {
+      const selected = [];
+      document.querySelectorAll('.question-checkbox:checked').forEach(cb => {
+        selected.push({
+          category: cb.dataset.category,
+          question: cb.dataset.question
+        });
+      });
+      return selected;
+    }
+
+    function showMessage(message, type) {
+      const messageDiv = document.getElementById('status-message');
+      messageDiv.textContent = message;
+      messageDiv.className = \`mt-4 p-4 rounded-lg \${ type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' :
+        type === 'warning' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
+        'bg-green-100 text-green-700 border border-green-300' }\`;
+      messageDiv.classList.remove('hidden');
+      setTimeout(() => messageDiv.classList.add('hidden'), 5000);
+    }
+
+    function toggleCategory(categoryId, toggleIcon) {
+      const content = document.getElementById(categoryId + '-content');
+      const isVisible = !content.classList.contains('hidden');
+      if (isVisible) {
+        content.classList.add('hidden');
+        toggleIcon.classList.remove('rotate-180');
+      } else {
+        content.classList.remove('hidden');
+        toggleIcon.classList.add('rotate-180');
+      }
+    }
+
+    function toggleSubcategory(subcategoryId, toggleIcon) {
+      const content = document.getElementById(subcategoryId + '-content');
+      const isVisible = !content.classList.contains('hidden');
+      if (isVisible) {
+        content.classList.add('hidden');
+        toggleIcon.classList.remove('rotate-180');
+      } else {
+        content.classList.remove('hidden');
+        toggleIcon.classList.add('rotate-180');
+      }
+    }
+
+    function generateQuestionsList() {
+      readPatientInfoFromInputs();
+      const selectedQuestions = getSelectedQuestions();
+
+      if (selectedQuestions.length === 0) {
+        showMessage("Please select at least one question to generate your list", "warning");
+        return;
+      }
+
+      const questionsContainer = document.getElementById('selected-questions');
+      questionsContainer.innerHTML = '';
+
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString();
+
+      const patientInfoDiv = document.createElement('div');
+      patientInfoDiv.className = 'mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200';
+
+      const patientTitle = document.createElement('h3');
+      patientTitle.className = 'font-semibold text-blue-800 mb-3';
+      patientTitle.textContent = 'Patient Information';
+      patientInfoDiv.appendChild(patientTitle);
+
+      const patientDetails = document.createElement('div');
+      patientDetails.className = 'space-y-2 text-sm';
+
+      const nameP = document.createElement('p');
+      nameP.innerHTML = \`<strong>Name:</strong> \${patientInfo.name || '_________________'}\`;
+      patientDetails.appendChild(nameP);
+
+      const ageP = document.createElement('p');
+      ageP.innerHTML = \`<strong>Age:</strong> \${patientInfo.age || '_________________'}\`;
+      patientDetails.appendChild(ageP);
+
+      const conditionP = document.createElement('p');
+      conditionP.innerHTML = \`<strong>Condition:</strong> \${patientInfo.condition || '_________________'}\`;
+      patientDetails.appendChild(conditionP);
+
+      const currentMedsP = document.createElement('p');
+      currentMedsP.innerHTML = \`<strong>Current Medications:</strong> \${patientInfo.currentMeds || '_________________'}\`;
+      patientDetails.appendChild(currentMedsP);
+
+      const newMedsP = document.createElement('p');
+      newMedsP.innerHTML = \`<strong>New/Changed Medications:</strong> \${patientInfo.newMeds || '_________________'}\`;
+      patientDetails.appendChild(newMedsP);
+
+      patientInfoDiv.appendChild(patientDetails);
+      questionsContainer.appendChild(patientInfoDiv);
+
+      const grouped = {};
+      selectedQuestions.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item.question);
+      });
+
+      Object.keys(grouped).forEach(category => {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'mb-4';
+
+        const categoryTitle = document.createElement('h3');
+        categoryTitle.className = 'font-semibold text-blue-800 mb-2';
+        categoryTitle.textContent = category;
+        categoryDiv.appendChild(categoryTitle);
+
+        const questionsList = document.createElement('div');
+        questionsList.className = 'space-y-3 ml-4';
+
+        grouped[category].forEach(question => {
+          const questionDiv = document.createElement('div');
+          questionDiv.className = 'mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50';
+
+          const questionText = document.createElement('p');
+          questionText.className = 'font-medium text-gray-800 mb-2';
+          questionText.textContent = question;
+          questionDiv.appendChild(questionText);
+
+          const answerBox = document.createElement('div');
+          answerBox.className = 'bg-white border border-gray-300 rounded p-3 min-h-[80px]';
+          answerBox.innerHTML = '<div class="text-gray-400 text-sm">Answer:</div><div class="mt-2 space-y-2"><div class="border-b border-gray-300 h-4"></div><div class="border-b border-gray-300 h-4"></div><div class="border-b border-gray-300 h-4"></div></div>';
+          questionDiv.appendChild(answerBox);
+
+          questionsList.appendChild(questionDiv);
+        });
+
+        categoryDiv.appendChild(questionsList);
+        questionsContainer.appendChild(categoryDiv);
+      });
+
+      document.getElementById('questions-list').classList.remove('hidden');
+      document.getElementById('questions-list').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function generatePDF() {
+      readPatientInfoFromInputs();
+      const selectedQuestions = getSelectedQuestions();
+
+      if (selectedQuestions.length === 0) {
+        showMessage("Please select at least one question to download", "warning");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      let yPosition = 20;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 20;
+      const lineHeight = 7;
+
+      function checkPageBreak(neededSpace) {
+        if (yPosition + neededSpace > pageHeight - margin) {
+          doc.addPage();
+          yPosition = 20;
+        }
+      }
+
+      function addWrappedText(text, x, y, maxWidth, fontSize = 10) {
+        doc.setFontSize(fontSize);
+        const lines = doc.splitTextToSize(text, maxWidth);
+        lines.forEach((line, index) => {
+          checkPageBreak(lineHeight);
+          doc.text(line, x, y + (index * lineHeight));
+          yPosition = y + (index * lineHeight) + lineHeight;
+        });
+        return lines.length * lineHeight;
+      }
+
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('Medical Questions for Pharmacist Consultation', 20, yPosition);
+      yPosition += 15;
+
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(\`Generated on: \${new Date().toLocaleDateString()}\`, 20, yPosition);
+      yPosition += 15;
+
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text('PATIENT INFORMATION', 20, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+
+      const pi = patientInfo;
+
+      checkPageBreak(30);
+      doc.text(\`Name: \${pi.name || '___________________'}\`, 25, yPosition);
+      yPosition += lineHeight;
+
+      checkPageBreak(lineHeight);
+      doc.text(\`Age: \${pi.age || '___________________'}\`, 25, yPosition);
+      yPosition += lineHeight;
+
+      checkPageBreak(lineHeight);
+      addWrappedText(\`Condition: \${pi.condition || '___________________'}\`, 25, yPosition, 160);
+      yPosition += lineHeight;
+
+      checkPageBreak(lineHeight);
+      addWrappedText(\`Current Medications: \${pi.currentMeds || '___________________'}\`, 25, yPosition, 160);
+      yPosition += lineHeight;
+
+      checkPageBreak(lineHeight);
+      addWrappedText(\`New/Changed Medications: \${pi.newMeds || '___________________'}\`, 25, yPosition, 160);
+      yPosition += 15;
+
+      const grouped = {};
+      selectedQuestions.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item.question);
+      });
+
+      Object.keys(grouped).forEach(category => {
+        checkPageBreak(20);
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(category.toUpperCase(), 20, yPosition);
+        yPosition += 10;
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+
+        grouped[category].forEach((question, index) => {
+          checkPageBreak(40);
+
+          const questionText = \`\${index + 1}. \${question}\`;
+          addWrappedText(questionText, 25, yPosition, 160, 10);
+          yPosition += 5;
+
+          checkPageBreak(25);
+          doc.text('Answer:', 25, yPosition);
+          yPosition += lineHeight;
+
+          for (let i = 0; i < 3; i++) {
+            checkPageBreak(lineHeight);
+            doc.line(25, yPosition, 185, yPosition);
+            yPosition += lineHeight;
+          }
+          yPosition += 5;
+        });
+
+        yPosition += 5;
+      });
+
+      doc.save(\`Medical_Questions_\${new Date().toISOString().split('T')[0]}.pdf\`);
+      showMessage("PDF downloaded successfully!", "success");
+    }
+
+    function printList() {
+      const selectedQuestions = getSelectedQuestions();
+      if (selectedQuestions.length === 0) {
+        showMessage("Please select at least one question to print", "warning");
+        return;
+      }
+      window.print();
+    }
+
+    function clearAllSelections() {
+      document.querySelectorAll('.question-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      localStorage.removeItem('selectedQuestions');
+      document.getElementById('questions-list').classList.add('hidden');
+      showMessage("All questions cleared successfully", "success");
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadPatientInfo();
+      loadSelectedQuestions();
+
+      document.getElementById('patient-name').addEventListener('input', readPatientInfoFromInputs);
+      document.getElementById('patient-age').addEventListener('input', readPatientInfoFromInputs);
+      document.getElementById('rheumatic-condition').addEventListener('input', readPatientInfoFromInputs);
+      document.getElementById('current-medications').addEventListener('input', readPatientInfoFromInputs);
+      document.getElementById('new-changed-medications').addEventListener('input', readPatientInfoFromInputs);
+
+      document.querySelectorAll('.question-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', saveSelectedQuestions);
+      });
+
+      document.querySelectorAll('.category-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          const categoryId = this.dataset.category;
+          const toggleIcon = this.querySelector('.toggle-icon');
+          toggleCategory(categoryId, toggleIcon);
+        });
+      });
+
+      document.querySelectorAll('.subcategory-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          const subcategoryId = this.dataset.subcategory;
+          const toggleIcon = this.querySelector('.subtoggle-icon');
+          toggleSubcategory(subcategoryId, toggleIcon);
+        });
+      });
+
+      document.getElementById('generate-list').addEventListener('click', function(e) {
+        e.preventDefault();
+        const button = this;
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('loading-spinner');
+
+        button.disabled = true;
+        buttonText.classList.add('hidden');
+        spinner.classList.remove('hidden');
+
+        setTimeout(() => {
+          generateQuestionsList();
+          button.disabled = false;
+          buttonText.classList.remove('hidden');
+          spinner.classList.add('hidden');
+        }, 300);
+      });
+
+      document.getElementById('download-pdf').addEventListener('click', function(e) {
+        e.preventDefault();
+        generatePDF();
+      });
+
+      document.getElementById('print-list').addEventListener('click', function(e) {
+        e.preventDefault();
+        printList();
+      });
+
+      document.getElementById('clear-list').addEventListener('click', function(e) {
+        e.preventDefault();
+        clearAllSelections();
+      });
+    });
+  </script>
+ </body>
+</html>
+
