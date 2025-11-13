@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>Medical Questions Planner</title>
+    <title>Rheumatic Disease Medication Questions</title>
 
     <!-- Tailwind & jsPDF -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -867,7 +867,7 @@
       <div id="questions-list" class="hidden bg-white rounded-lg shadow-lg p-6">
         <div class="print-only mb-6">
           <h1 class="text-2xl font-bold text-center mb-4">
-            Medical Questions for Pharmacist Consultation
+             Questions for Pharmacist Consultation
           </h1>
           <p class="text-center text-sm text-gray-600 mb-6">
             Generated on: <span id="print-date"></span>
@@ -1234,7 +1234,7 @@
         doc.setFontSize(16);
         doc.setFont(undefined, "bold");
         doc.text(
-          "Medical Questions for Pharmacist Consultation",
+          "Questions for Pharmacist Consultation",
           20,
           yPosition
         );
@@ -1349,7 +1349,7 @@
         });
 
         doc.save(
-          "Medical_Questions_" +
+          "Medication_Questions_" +
             new Date().toISOString().split("T")[0] +
             ".pdf"
         );
@@ -1484,4 +1484,5 @@
     </script>
   </body>
 </html>
+
 
