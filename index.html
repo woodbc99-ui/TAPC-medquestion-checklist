@@ -1,299 +1,917 @@
 <!doctype html>
 <html lang="en">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Medical Questions Planner</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Medical Questions Planner</title>
 
-  <!-- Canva SDKs REMOVED on purpose; this file is standalone -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Canva SDKs (can be removed if you're fully standalone) -->
+    <script src="/_sdk/data_sdk.js"></script>
+    <script src="/_sdk/element_sdk.js"></script>
 
-  <style>
-    body {
-      box-sizing: border-box;
-    }
-    html, body {
-      height: 100%;
-    }
-    @media print {
-      .no-print { display: none !important; }
-      .print-only { display: block !important; }
-      body { background: white !important; }
-      .bg-blue-50 { background: white !important; }
-      .bg-blue-100 { background: white !important; }
-      .shadow-lg { box-shadow: none !important; }
-    }
-    .print-only { display: none; }
-  </style>
-  <style>@view-transition { navigation: auto; }</style>
- </head>
+    <!-- Tailwind & jsPDF -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
- <body class="min-h-full bg-blue-50 font-sans">
-  <main class="container mx-auto px-4 py-8 max-w-4xl">
-   <header class="text-center mb-0 bg-gradient-to-r from-blue-600 to-blue-900 rounded-t-lg p-6 text-white no-print">
-    <h1 id="form-title" class="text-3xl font-bold mb-2">🦴 Rheumatic Disease Medication Questions</h1>
-    <p id="subtitle" class="text-lg text-blue-100">Personalized consultation planner for young adults</p>
-   </header>
+    <style>
+      body {
+        box-sizing: border-box;
+      }
 
-   <!-- Main Form (no-print) -->
-   <div class="bg-white rounded-b-lg shadow-lg p-6 mb-6 no-print">
-    <!-- Patient Information Form -->
-    <h2 class="text-xl font-semibold text-blue-800 mb-6 flex items-center">
-      <span class="bg-blue-100 rounded-full p-2 mr-3">👤</span> Patient Information
-    </h2>
+      html,
+      body {
+        height: 100%;
+      }
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-     <div>
-      <label for="patient-name" class="block text-sm font-medium text-gray-700 mb-2">Patient Name</label>
-      <input type="text" id="patient-name" class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your name">
-     </div>
+      @media print {
+        .no-print {
+          display: none !important;
+        }
 
-     <div>
-      <label for="patient-age" class="block text-sm font-medium text-gray-700 mb-2">Age</label>
-      <input type="number" id="patient-age" class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your age" min="1" max="120">
-     </div>
+        .print-only {
+          display: block !important;
+        }
 
-     <div class="md:col-span-2">
-      <label for="rheumatic-condition" class="block text-sm font-medium text-gray-700 mb-2">Rheumatic Condition</label>
-      <input type="text" id="rheumatic-condition" class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Rheumatoid Arthritis, Lupus, Fibromyalgia">
-     </div>
+        body {
+          background: white !important;
+        }
 
-     <div class="md:col-span-2">
-      <label for="current-medications" class="block text-sm font-medium text-gray-700 mb-2">Current Medication List</label>
-      <textarea id="current-medications" rows="3" class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="List all current medications, dosages, and frequency (e.g., Methotrexate 15mg weekly, Prednisone 5mg daily)"></textarea>
-     </div>
+        .bg-blue-50 {
+          background: white !important;
+        }
 
-     <div class="md:col-span-2">
-      <label for="new-changed-medications" class="block text-sm font-medium text-gray-700 mb-2">New or Recently Changed Medications</label>
-      <textarea id="new-changed-medications" rows="3" class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="List any new medications or recent changes to existing medications"></textarea>
-     </div>
-    </div>
+        .bg-blue-100 {
+          background: white !important;
+        }
 
-    <!-- Questions Section Header -->
-    <h2 class="text-xl font-semibold text-blue-800 mb-6 flex items-center border-t border-gray-200 pt-6">
-      <span class="bg-blue-100 rounded-full p-2 mr-3">✅</span> Select Questions for Your Pharmacist
-    </h2>
+        .shadow-lg {
+          box-shadow: none !important;
+        }
+      }
 
-    <div class="grid gap-6">
-     <!-- Lifestyle Section -->
-     <div class="mb-6">
-      <button class="category-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-t-lg p-4 border border-gray-200 border-b-0" data-category="lifestyle">
-        <h2 class="text-xl font-semibold text-blue-800 flex items-center justify-between">
-          <span class="flex items-center">
-            <span class="bg-white rounded-full p-2 mr-3">🏃‍♀️</span> Lifestyle
-          </span>
-          <span class="toggle-icon text-blue-700 transform transition-transform duration-200 text-2xl"> ▼ </span>
+      .print-only {
+        display: none;
+      }
+    </style>
+
+    <style>
+      @view-transition {
+        navigation: auto;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-full bg-blue-50 font-sans">
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+      <!-- Header -->
+      <header class="text-center mb-0 bg-gradient-to-r from-blue-600 to-blue-900 rounded-t-lg p-6 text-white no-print">
+        <h1 id="form-title" class="text-3xl font-bold mb-2">
+          🦴 Rheumatic Disease Medication Questions
+        </h1>
+        <p id="subtitle" class="text-lg text-blue-100">
+          Personalized consultation planner for young adults
+        </p>
+      </header>
+
+      <!-- Main Card -->
+      <div class="bg-white rounded-b-lg shadow-lg p-6 mb-6 no-print">
+        <!-- Patient Information Form -->
+        <h2 class="text-xl font-semibold text-blue-800 mb-6 flex items-center">
+          <span class="bg-blue-100 rounded-full p-2 mr-3">👤</span>
+          Patient Information
         </h2>
-      </button>
 
-      <div id="lifestyle-content" class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4">
-       <!-- Sports + Activities Subsection -->
-       <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
-        <button class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3" data-subcategory="sports-activities">
-          <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
-            <span class="flex items-center">
-              <span class="bg-white rounded-full p-1 mr-2 text-sm">🏃‍♀️</span> Sports + Activities
-            </span>
-            <span class="subtoggle-icon text-blue-700 text-xl"> ▼ </span>
-          </h3>
-        </button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <label
+              for="patient-name"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Patient Name
+            </label>
+            <input
+              type="text"
+              id="patient-name"
+              class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your name"
+            />
+          </div>
 
-        <div id="sports-activities-content" class="subcategory-content ml-6 space-y-4">
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Lifestyle - Sports + Activities"
-                   data-question="Will this affect my ability to participate in sports or other activities?">
-            <span class="text-gray-700">Will this affect my ability to participate in sports or other activities?</span>
-          </label>
+          <div>
+            <label
+              for="patient-age"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Age
+            </label>
+            <input
+              type="number"
+              id="patient-age"
+              class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your age"
+              min="1"
+              max="120"
+            />
+          </div>
+
+          <div class="md:col-span-2">
+            <label
+              for="rheumatic-condition"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Rheumatic Condition
+            </label>
+            <input
+              type="text"
+              id="rheumatic-condition"
+              class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., Rheumatoid Arthritis, Lupus, Fibromyalgia"
+            />
+          </div>
+
+          <div class="md:col-span-2">
+            <label
+              for="current-medications"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Current Medication List
+            </label>
+            <textarea
+              id="current-medications"
+              rows="3"
+              class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="List all current medications, dosages, and frequency (e.g., Methotrexate 15mg weekly, Prednisone 5mg daily)"
+            ></textarea>
+          </div>
+
+          <div class="md:col-span-2">
+            <label
+              for="new-changed-medications"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              New or Recently Changed Medications
+            </label>
+            <textarea
+              id="new-changed-medications"
+              rows="3"
+              class="patient-info-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="List any new medications or recent changes to existing medications"
+            ></textarea>
+          </div>
         </div>
-       </div>
 
-       <!-- General Subsection -->
-       <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
-        <button class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3" data-subcategory="general">
-          <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
-            <span class="flex items-center">
-              <span class="bg-white rounded-full p-1 mr-2 text-sm">⚡</span> General
-            </span>
-            <span class="subtoggle-icon text-blue-700 text-xl"> ▼ </span>
-          </h3>
-        </button>
-
-        <div id="general-content" class="subcategory-content ml-6 space-y-4">
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Lifestyle - General"
-                   data-question="How will this medication affect my lifestyle?">
-            <span class="text-gray-700">How will this medication affect my lifestyle?</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Lifestyle - General"
-                   data-question="Will this affect my sleep and energy levels?">
-            <span class="text-gray-700">Will this affect my sleep and energy levels?</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Lifestyle - General"
-                   data-question="Does this affect what I am able to eat and when?">
-            <span class="text-gray-700">Does this affect what I am able to eat and when?</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Lifestyle - General"
-                   data-question="Do I need to avoid alcohol?">
-            <span class="text-gray-700">Do I need to avoid alcohol?</span>
-          </label>
-        </div>
-       </div>
-
-       <!-- Travelling Subsection -->
-       <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
-        <button class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3" data-subcategory="travelling">
-          <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
-            <span class="flex items-center">
-              <span class="bg-white rounded-full p-1 mr-2 text-sm">✈️</span> Travelling
-            </span>
-            <span class="subtoggle-icon text-blue-700 text-xl"> ▼ </span>
-          </h3>
-        </button>
-
-        <div id="travelling-content" class="subcategory-content ml-6 space-y-4">
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Travelling"
-                   data-question="How do I transport my medications?">
-            <span class="text-gray-700">How do I transport my medications?</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Travelling"
-                   data-question="Can I bring my medication and needles/injections through airport security? Any special considerations">
-            <span class="text-gray-700">Can I bring my medication and needles/injections through airport security? Any special considerations</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Travelling"
-                   data-question="If I'm traveling across time zones, how should I adjust my medication schedule?">
-            <span class="text-gray-700">If I'm traveling across time zones, how should I adjust my medication schedule?</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Travelling"
-                   data-question="What should I do if I lose or run out of my medication while away from home?">
-            <span class="text-gray-700">What should I do if I lose or run out of my medication while away from home?</span>
-          </label>
-        </div>
-       </div>
-
-       <!-- Pregnancy + Family Planning Subsection -->
-       <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
-        <button class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3" data-subcategory="pregnancy-family">
-          <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
-            <span class="flex items-center">
-              <span class="bg-white rounded-full p-1 mr-2 text-sm">👶</span> Pregnancy + Family Planning
-            </span>
-            <span class="subtoggle-icon text-blue-700 text-xl"> ▼ </span>
-          </h3>
-        </button>
-
-        <div id="pregnancy-family-content" class="subcategory-content ml-6 space-y-4">
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Pregnancy + Family Planning"
-                   data-question="Is it safe to take this medication if I'm pregnant, trying to get pregnant, or breastfeeding?">
-            <span class="text-gray-700">Is it safe to take this medication if I'm pregnant, trying to get pregnant, or breastfeeding?</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Pregnancy + Family Planning"
-                   data-question="What should I know about contraception use with my medication?">
-            <span class="text-gray-700">What should I know about contraception use with my medication?</span>
-          </label>
-
-          <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-            <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                   data-category="Pregnancy + Family Planning"
-                   data-question="Could this medication affect fertility or sperm/egg health?">
-            <span class="text-gray-700">Could this medication affect fertility or sperm/egg health?</span>
-          </label>
-        </div>
-       </div>
-      </div>
-     </div>
-
-     <!-- Medication Information Section -->
-     <div class="mb-6">
-      <button class="category-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-t-lg p-4 border border-gray-200 border-b-0" data-category="medication">
-        <h2 class="text-xl font-semibold text-blue-800 flex items-center justify-between">
-          <span class="flex items-center">
-            <span class="bg-white rounded-full p-2 mr-3">💊</span> Medication Information
-          </span>
-          <span class="toggle-icon text-blue-700 transform transition-transform duration-200 text-2xl"> ▼ </span>
+        <!-- Questions Section Header -->
+        <h2 class="text-xl font-semibold text-blue-800 mb-6 flex items-center border-t border-gray-200 pt-6">
+          <span class="bg-blue-100 rounded-full p-2 mr-3">✅</span>
+          Select Questions for Your Pharmacist
         </h2>
-      </button>
 
-      <div id="medication-content" class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4 ml-8 space-y-4">
-        <!-- (medication questions unchanged from your version) -->
-        <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
-          <input type="checkbox" class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
-                 data-category="Medication Information"
-                 data-question="Do I need to take this medicine with food, an empty stomach, or does it not matter? (For oral medications)">
-          <span class="text-gray-700">Do I need to take this medicine with food, an empty stomach, or does it not matter? (For oral medications)</span>
-        </label>
+        <div class="grid gap-6">
+          <!-- Lifestyle Section -->
+          <div class="mb-6">
+            <button
+              class="category-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-t-lg p-4 border border-gray-200 border-b-0"
+              data-category="lifestyle"
+            >
+              <h2 class="text-xl font-semibold text-blue-800 flex items-center justify-between">
+                <span class="flex items-center">
+                  <span class="bg-white rounded-full p-2 mr-3">🏃‍♀️</span>
+                  Lifestyle
+                </span>
+                <span class="toggle-icon text-blue-700 transform transition-transform duration-200 text-2xl">
+                  ▼
+                </span>
+              </h2>
+            </button>
 
-        <!-- ... keep the rest of this section exactly as you had it ... -->
+            <div
+              id="lifestyle-content"
+              class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4"
+            >
+              <!-- Sports + Activities Subsection -->
+              <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
+                <button
+                  class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3"
+                  data-subcategory="sports-activities"
+                >
+                  <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
+                    <span class="flex items-center">
+                      <span class="bg-white rounded-full p-1 mr-2 text-sm">🏃‍♀️</span>
+                      Sports + Activities
+                    </span>
+                    <span class="subtoggle-icon text-blue-700 text-xl">▼</span>
+                  </h3>
+                </button>
+
+                <div
+                  id="sports-activities-content"
+                  class="subcategory-content ml-6 space-y-4"
+                >
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Lifestyle - Sports + Activities"
+                      data-question="Will this affect my ability to participate in sports or other activities?"
+                    />
+                    <span class="text-gray-700">
+                      Will this affect my ability to participate in sports or other activities?
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- General Subsection -->
+              <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
+                <button
+                  class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3"
+                  data-subcategory="general"
+                >
+                  <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
+                    <span class="flex items-center">
+                      <span class="bg-white rounded-full p-1 mr-2 text-sm">⚡</span>
+                      General
+                    </span>
+                    <span class="subtoggle-icon text-blue-700 text-xl">▼</span>
+                  </h3>
+                </button>
+
+                <div
+                  id="general-content"
+                  class="subcategory-content ml-6 space-y-4"
+                >
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Lifestyle - General"
+                      data-question="How will this medication affect my lifestyle?"
+                    />
+                    <span class="text-gray-700">
+                      How will this medication affect my lifestyle?
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Lifestyle - General"
+                      data-question="Will this affect my sleep and energy levels?"
+                    />
+                    <span class="text-gray-700">
+                      Will this affect my sleep and energy levels?
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Lifestyle - General"
+                      data-question="Does this affect what I am able to eat and when?"
+                    />
+                    <span class="text-gray-700">
+                      Does this affect what I am able to eat and when?
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Lifestyle - General"
+                      data-question="Do I need to avoid alcohol?"
+                    />
+                    <span class="text-gray-700">
+                      Do I need to avoid alcohol?
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Travelling Subsection -->
+              <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
+                <button
+                  class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3"
+                  data-subcategory="travelling"
+                >
+                  <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
+                    <span class="flex items-center">
+                      <span class="bg-white rounded-full p-1 mr-2 text-sm">✈️</span>
+                      Travelling
+                    </span>
+                    <span class="subtoggle-icon text-blue-700 text-xl">▼</span>
+                  </h3>
+                </button>
+
+                <div
+                  id="travelling-content"
+                  class="subcategory-content ml-6 space-y-4"
+                >
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Travelling"
+                      data-question="How do I transport my medications?"
+                    />
+                    <span class="text-gray-700">
+                      How do I transport my medications?
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Travelling"
+                      data-question="Can I bring my medication and needles/injections through airport security? Any special considerations"
+                    />
+                    <span class="text-gray-700">
+                      Can I bring my medication and needles/injections through airport security? Any
+                      special considerations
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Travelling"
+                      data-question="If I'm traveling across time zones, how should I adjust my medication schedule?"
+                    />
+                    <span class="text-gray-700">
+                      If I'm traveling across time zones, how should I adjust my medication schedule?
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Travelling"
+                      data-question="What should I do if I lose or run out of my medication while away from home?"
+                    />
+                    <span class="text-gray-700">
+                      What should I do if I lose or run out of my medication while away from home?
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Pregnancy + Family Planning Subsection -->
+              <div class="ml-2 mb-6 border border-gray-300 rounded-lg p-3">
+                <button
+                  class="subcategory-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-lg p-3"
+                  data-subcategory="pregnancy-family"
+                >
+                  <h3 class="font-medium text-blue-700 mb-2 flex items-center justify-between">
+                    <span class="flex items-center">
+                      <span class="bg-white rounded-full p-1 mr-2 text-sm">👶</span>
+                      Pregnancy + Family Planning
+                    </span>
+                    <span class="subtoggle-icon text-blue-700 text-xl">▼</span>
+                  </h3>
+                </button>
+
+                <div
+                  id="pregnancy-family-content"
+                  class="subcategory-content ml-6 space-y-4"
+                >
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Pregnancy + Family Planning"
+                      data-question="Is it safe to take this medication if I'm pregnant, trying to get pregnant, or breastfeeding?"
+                    />
+                    <span class="text-gray-700">
+                      Is it safe to take this medication if I'm pregnant, trying to get pregnant, or breastfeeding?
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Pregnancy + Family Planning"
+                      data-question="What should I know about contraception use with my medication?"
+                    />
+                    <span class="text-gray-700">
+                      What should I know about contraception use with my medication?
+                    </span>
+                  </label>
+
+                  <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                      data-category="Pregnancy + Family Planning"
+                      data-question="Could this medication affect fertility or sperm/egg health?"
+                    />
+                    <span class="text-gray-700">
+                      Could this medication affect fertility or sperm/egg health?
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medication Information Section -->
+          <div class="mb-6">
+            <button
+              class="category-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-t-lg p-4 border border-gray-200 border-b-0"
+              data-category="medication"
+            >
+              <h2 class="text-xl font-semibold text-blue-800 flex items-center justify-between">
+                <span class="flex items-center">
+                  <span class="bg-white rounded-full p-2 mr-3">💊</span>
+                  Medication Information
+                </span>
+                <span class="toggle-icon text-blue-700 transform transition-transform duration-200 text-2xl">
+                  ▼
+                </span>
+              </h2>
+            </button>
+
+            <div
+              id="medication-content"
+              class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4 ml-8 space-y-4"
+            >
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="Do I need to take this medicine with food, an empty stomach, or does it not matter? (For oral medications)"
+                />
+                <span class="text-gray-700">
+                  Do I need to take this medicine with food, an empty stomach, or does it not matter? (For oral medications)
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="What over the counter medications should I avoid?"
+                />
+                <span class="text-gray-700">
+                  What over the counter medications should I avoid?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="What natural health products or supplements should I avoid?"
+                />
+                <span class="text-gray-700">
+                  What natural health products or supplements should I avoid?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="Do I have to take this medication at the same time every day? What happens if I don't?"
+                />
+                <span class="text-gray-700">
+                  Do I have to take this medication at the same time every day? What happens if I don't?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="If I miss a dose, what should I do?"
+                />
+                <span class="text-gray-700">
+                  If I miss a dose, what should I do?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="What happens if I take too much by accident?"
+                />
+                <span class="text-gray-700">
+                  What happens if I take too much by accident?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="When can I expect this to help my symptoms?"
+                />
+                <span class="text-gray-700">
+                  When can I expect this to help my symptoms?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="Where can I store my medications? (Fridge)"
+                />
+                <span class="text-gray-700">
+                  Where can I store my medications? (Fridge)
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="Are there safe handling procedures for this medication?"
+                />
+                <span class="text-gray-700">
+                  Are there safe handling procedures for this medication?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Medication Information"
+                  data-question="Besides my condition, what else is this medication for?"
+                />
+                <span class="text-gray-700">
+                  Besides my condition, what else is this medication for?
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Side Effects Section -->
+          <div class="mb-6">
+            <button
+              class="category-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-t-lg p-4 border border-gray-200 border-b-0"
+              data-category="side-effects"
+            >
+              <h2 class="text-xl font-semibold text-blue-800 flex items-center justify-between">
+                <span class="flex items-center">
+                  <span class="bg-white rounded-full p-2 mr-3">⚠️</span>
+                  Side Effects
+                </span>
+                <span class="toggle-icon text-blue-700 transform transition-transform duration-200 text-2xl">
+                  ▼
+                </span>
+              </h2>
+            </button>
+
+            <div
+              id="side-effects-content"
+              class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4 ml-8 space-y-4"
+            >
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Side Effects"
+                  data-question="Will this affect my mood? If so, how?"
+                />
+                <span class="text-gray-700">
+                  Will this affect my mood? If so, how?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Side Effects"
+                  data-question="What side effects should I watch out for while taking this medication?"
+                />
+                <span class="text-gray-700">
+                  What side effects should I watch out for while taking this medication?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Side Effects"
+                  data-question="What do I do if I experience them?"
+                />
+                <span class="text-gray-700">
+                  What do I do if I experience them?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Side Effects"
+                  data-question="When should I contact my doctor?"
+                />
+                <span class="text-gray-700">
+                  When should I contact my doctor?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Side Effects"
+                  data-question="Do I need regular blood tests while I am taking this medication?"
+                />
+                <span class="text-gray-700">
+                  Do I need regular blood tests while I am taking this medication?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Side Effects"
+                  data-question="How do I know if I am experiencing a dangerous reaction to the medication vs. an expected side effect?"
+                />
+                <span class="text-gray-700">
+                  How do I know if I am experiencing a dangerous reaction to the medication vs. an expected side effect?
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Injection Based Questions Section -->
+          <div class="mb-6">
+            <button
+              class="category-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-t-lg p-4 border border-gray-200 border-b-0"
+              data-category="injections"
+            >
+              <h2 class="text-xl font-semibold text-blue-800 flex items-center justify-between">
+                <span class="flex items-center">
+                  <span class="bg-white rounded-full p-2 mr-3">💉</span>
+                  Injection Based Questions
+                </span>
+                <span class="toggle-icon text-blue-700 transform transition-transform duration-200 text-2xl">
+                  ▼
+                </span>
+              </h2>
+            </button>
+
+            <div
+              id="injections-content"
+              class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4 ml-8 space-y-4"
+            >
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="I am interested in getting a vaccine in the near future, is it safe to get it while on this medication?"
+                />
+                <span class="text-gray-700">
+                  I am interested in getting a vaccine in the near future, is it safe to get it while on this medication?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="Where can I inject this medication? Is it possible for the pharmacist to do the first injection and teach me?"
+                />
+                <span class="text-gray-700">
+                  Where can I inject this medication? Is it possible for the pharmacist to do the first injection and teach me?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="Where on my body should I inject it, and should I rotate injection sites?"
+                />
+                <span class="text-gray-700">
+                  Where on my body should I inject it, and should I rotate injection sites?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="What should I expect from the injection itself? Are there medications I should take with it?"
+                />
+                <span class="text-gray-700">
+                  What should I expect from the injection itself? Are there medications I should take with it?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="What injection reactions and symptoms should I watch out for?"
+                />
+                <span class="text-gray-700">
+                  What injection reactions and symptoms should I watch out for?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="Is the flu vaccine safe to take while on this medication?"
+                />
+                <span class="text-gray-700">
+                  Is the flu vaccine safe to take while on this medication?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="If I am injecting this medication at home, what is a safe way for me to dispose of the needle tips and do I bring it to the pharmacy for disposal?"
+                />
+                <span class="text-gray-700">
+                  If I am injecting this medication at home, what is a safe way for me to dispose of the needle tips and do I bring it to the pharmacy for disposal?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Injection Based Questions"
+                  data-question="When do I need to get these injections done?"
+                />
+                <span class="text-gray-700">
+                  When do I need to get these injections done?
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Concerns Section -->
+          <div class="mb-6">
+            <button
+              class="category-toggle w-full text-left bg-blue-100 hover:bg-blue-200 transition-colors duration-200 rounded-t-lg p-4 border border-gray-200 border-b-0"
+              data-category="concerns"
+            >
+              <h2 class="text-xl font-semibold text-blue-800 flex items-center justify-between">
+                <span class="flex items-center">
+                  <span class="bg-white rounded-full p-2 mr-3">🤔</span>
+                  Concerns
+                </span>
+                <span class="toggle-icon text-blue-700 transform transition-transform duration-200 text-2xl">
+                  ▼
+                </span>
+              </h2>
+            </button>
+
+            <div
+              id="concerns-content"
+              class="category-content border border-gray-200 border-t-0 rounded-b-lg p-4 ml-8 space-y-4"
+            >
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Concerns"
+                  data-question="I have specific concerns about this drug based on what I've read online/from others, are these true?"
+                />
+                <span class="text-gray-700">
+                  I have specific concerns about this drug based on what I've read online/from others, are these true?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Concerns"
+                  data-question="Can I take this medication if I'm feeling sick or have an infection?"
+                />
+                <span class="text-gray-700">
+                  Can I take this medication if I'm feeling sick or have an infection?
+                </span>
+              </label>
+
+              <label class="flex items-start space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded">
+                <input
+                  type="checkbox"
+                  class="question-checkbox mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
+                  data-category="Concerns"
+                  data-question="What options exist for covering the cost of my medication(s)?"
+                />
+                <span class="text-gray-700">
+                  What options exist for covering the cost of my medication(s)?
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <div class="mt-8 text-center">
+          <button
+            id="generate-list"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span id="button-text">Generate My Question List</span>
+            <span id="loading-spinner" class="hidden ml-2">
+              <svg class="animate-spin h-4 w-4 inline" viewBox="0 0 24 24">
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                  fill="none"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </span>
+          </button>
+        </div>
       </div>
-     </div>
 
-     <!-- Side Effects, Injection Based Questions, Concerns sections -->
-     <!-- (keep exactly as in your current file – truncated here for brevity) -->
+      <!-- Generated Questions List -->
+      <div id="questions-list" class="hidden bg-white rounded-lg shadow-lg p-6">
+        <div class="print-only mb-6">
+          <h1 class="text-2xl font-bold text-center mb-4">
+            Medical Questions for Pharmacist Consultation
+          </h1>
+          <p class="text-center text-sm text-gray-600 mb-6">
+            Generated on: <span id="print-date"></span>
+          </p>
+        </div>
 
-    </div>
+        <h2 class="text-2xl font-bold text-blue-900 mb-4 no-print">
+          📋 My Questions for the Doctor
+        </h2>
 
-    <div class="mt-8 text-center">
-     <button id="generate-list" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-       <span id="button-text">Generate My Question List</span>
-       <span id="loading-spinner" class="hidden ml-2">
-         <svg class="animate-spin h-4 w-4 inline" viewBox="0 0 24 24">
-           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-           <path class="opacity-75" fill="CurrentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2
-             5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3
-             7.938l3-2.647z"></path>
-         </svg>
-       </span>
-     </button>
-    </div>
-   </div>
+        <div id="selected-questions" class="space-y-3"></div>
 
-   <!-- Generated Questions List -->
-   <div id="questions-list" class="hidden bg-white rounded-lg shadow-lg p-6">
-    <div class="print-only mb-6">
-     <h1 class="text-2xl font-bold text-center mb-4">Medical Questions for Pharmacist Consultation</h1>
-     <p class="text-center text-sm text-gray-600 mb-6">Generated on: <span id="print-date"></span></p>
-    </div>
+        <div class="mt-6 text-center space-x-4 no-print">
+          <button
+            id="download-pdf"
+            class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200"
+          >
+            📄 Download PDF
+          </button>
 
-    <h2 class="text-2xl font-bold text-blue-900 mb-4 no-print">📋 My Questions for the Doctor</h2>
-    <div id="selected-questions" class="space-y-3"></div>
+          <button
+            id="print-list"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200"
+          >
+            🖨️ Print List
+          </button>
 
-    <div class="mt-6 text-center space-x-4 no-print">
-      <button id="download-pdf" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">📄 Download PDF</button>
-      <button id="print-list" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">🖨️ Print List</button>
-      <button id="clear-list" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">Clear List</button>
-    </div>
-   </div>
+          <button
+            id="clear-list"
+            class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200"
+          >
+            Clear List
+          </button>
+        </div>
+      </div>
 
-   <!-- Status Messages -->
-   <div id="status-message" class="hidden mt-4 p-4 rounded-lg"></div>
-  </main>
+      <!-- Status Messages -->
+      <div id="status-message" class="hidden mt-4 p-4 rounded-lg"></div>
+    </main>
 
   <!-- Standalone JS (no Canva SDK) -->
   <script>
